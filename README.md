@@ -11,7 +11,10 @@
 - 你想从手机继续发消息，让电脑上的 Codex 接着执行
 - 你希望默认是私有访问，并且新手机第一次登录要经过电脑批准
 
-如果你不熟悉这类项目，也没关系。按下面步骤做，目标就是“从零部署起来并能在手机上用”。
+如果你不熟悉这类项目，也没关系。只要你有codex，部署方案：在你电脑codex新起一个线程，复制本项目链接地址：https://github.com/StarsTom/mobileCodexHelper，
+然后分析依赖并安装调试运行。
+
+如果觉得还有点用，请帮忙star一下，谢谢啦~
 
 ## 界面预览
 
@@ -26,7 +29,7 @@
 - 首次登录新设备时，必须由电脑端批准
 - 在 Windows 桌面工具中查看：
   - 本地服务状态
-  - 远程发布状态
+  - 手机访问开关状态
   - 已批准设备白名单
   - 待审批设备列表
 
@@ -48,7 +51,7 @@ Tailscale 私网 HTTPS
    ↓
 本机 nginx 代理
    ↓
-本机 claudecodeui（已套用本项目补丁）
+本机网页控制服务
    ↓
 电脑上的 Codex 会话
 ```
@@ -74,200 +77,46 @@ Tailscale 私网 HTTPS
 - 这是最容易做成“只有你自己能访问”的远程方案
 - 比直接公网暴露安全得多
 
+## 更省事的使用方式
+
+如果你是普通使用者，不想自己手动执行很多命令，推荐直接使用发布页里的便携版：
+
+- 解压整个发布目录
+- 双击 `MobileCodexControl.exe`
+- 正常情况下，不需要你自己再准备额外的程序源码或压缩包
+
+首次打开后，桌面工具会自动弹出“首次初始化向导”。  
+你只需要：
+
+1. 确认 `node.exe`、`nginx.exe`、`tailscale.exe` 路径
+2. 点击“`一键初始化并启动`”
+
+向导会自动帮你完成：
+
+- 保存本机路径配置
+- 识别便携包中已经内置的运行环境
+- 启动本地服务
+
+只有在排查问题或维护发布包时，才可能需要打开“故障处理工具”并手动选择程序目录或压缩包。
+
 ## 最快部署路线
 
-如果你不想一开始看太多说明，可以先照下面这条最短路径做：
-
-### 电脑上
+如果你不想一开始看太多说明，可以直接按这个顺序做：
 
 1. 安装 Python 3.11+、Node.js 22、nginx、Tailscale
-2. 把上游 `claudecodeui v1.25.2` 放到 `vendor/claudecodeui-1.25.2`
-3. 运行：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/apply-upstream-overrides.ps1
-cd vendor/claudecodeui-1.25.2
-npm install
-cd ..\..
-powershell -ExecutionPolicy Bypass -File scripts/start-mobile-codex-stack.ps1
-python mobile_codex_control.py
-```
-
-4. 在电脑浏览器打开：
-
-```text
-http://127.0.0.1:3001
-```
-
-5. 完成第一次注册
-
-### 手机上
-
-1. 手机安装并登录 Tailscale
-2. 电脑执行：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/enable-mobile-codex-remote.ps1
-```
-
-3. 手机打开 Tailscale 提供的私有 HTTPS 地址
-4. 用刚才注册的账号登录
-5. 如果手机提示等待批准，就到电脑桌面工具里批准这台设备
+2. 从发布页下载便携版，完整解压到一个固定目录
+3. 双击 `MobileCodexControl.exe`
+4. 在初始化向导里确认 `node.exe`、`nginx.exe`、`tailscale.exe` 路径
+5. 点击“`一键初始化并启动`”
+6. 在电脑浏览器打开 `http://127.0.0.1:3001`，完成第一次注册
+7. 在桌面工具里点击“开启手机访问”
+8. 让手机和电脑登录同一个 Tailscale 网络
+9. 用手机打开桌面工具里显示的“手机访问地址”
+10. 首次登录新设备时，在电脑端批准这台设备
 
 做到这里，你通常已经可以从手机继续控制电脑上的 Codex 了。
 
-## 第一步：下载本项目
-
-把当前仓库放到一个你自己的工作目录，例如：
-
-```text
-D:\mobileCodexHelper
-```
-
-后面文档里的路径都以这个目录为例。
-
-## 第二步：下载上游 claudecodeui
-
-本项目不是完整替代上游，而是“在上游基础上的安全收敛和手机控制增强层”。
-
-请把上游 `siteboon/claudecodeui` 的 `v1.25.2` 源码下载到：
-
-```text
-vendor/claudecodeui-1.25.2
-```
-
-也就是最终目录像这样：
-
-```text
-mobileCodexHelper/
-├─ vendor/
-│  └─ claudecodeui-1.25.2/
-├─ upstream-overrides/
-├─ scripts/
-├─ deploy/
-└─ mobile_codex_control.py
-```
-
-## 第三步：把本项目补丁应用到上游源码
-
-在项目根目录运行：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/apply-upstream-overrides.ps1
-```
-
-这一步会把 `upstream-overrides/claudecodeui-1.25.2/` 里的修改覆盖到上游源码目录里。
-
-## 第四步：安装上游依赖
-
-进入上游目录：
-
-```powershell
-cd vendor/claudecodeui-1.25.2
-npm install
-```
-
-如果你只想先运行，不打包桌面工具，那么 Python 侧通常不需要额外第三方依赖。
-
-如果你想把桌面工具打包成 `.exe`，再执行：
-
-```powershell
-pip install -r requirements.txt
-```
-
-## 第五步：检查本机环境
-
-回到项目根目录后，先运行：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/check-mobile-codex-runtime.ps1
-```
-
-你需要重点确认输出中的几项：
-
-- `UpstreamExists = True`
-- `Node` 有值
-- `Nginx` 有值
-- 如果要走私网远程访问，`Tailscale` 也应有值
-
-## 第六步：启动本地服务
-
-直接执行：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/start-mobile-codex-stack.ps1
-```
-
-这个脚本会做两件事：
-
-1. 启动本地 `claudecodeui` 服务
-2. 启动本地 nginx 代理
-
-默认端口：
-
-- 应用：`127.0.0.1:3001`
-- 代理：`127.0.0.1:8080`
-
-## 第七步：打开桌面控制工具
-
-你可以直接运行：
-
-```powershell
-python mobile_codex_control.py
-```
-
-或者：
-
-```powershell
-scripts\launch-mobile-codex-control.cmd
-```
-
-桌面工具里你可以看到：
-
-- PC 应用服务是否正常
-- nginx 是否正常
-- Tailscale 是否登录
-- 远程发布是否正常
-- 手机设备在线情况
-- 待审批设备
-
-## 第八步：第一次注册 / 登录
-
-第一次使用时，先在电脑浏览器打开本地页面：
-
-```text
-http://127.0.0.1:3001
-```
-
-完成首次账号注册。
-
-说明：
-
-- 这是单用户系统
-- 第一个注册的账号就是你的管理账号
-
-## 第九步：手机访问
-
-### 只在局域网/本机测试
-
-你可以先在电脑本机浏览器测试登录流程是否正常。
-
-### 通过 Tailscale 私网远程访问
-
-如果你已经在电脑和手机上登录同一个 Tailscale 网络，执行：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/enable-mobile-codex-remote.ps1
-```
-
-然后在桌面工具里查看远程发布状态。
-
-手机端推荐使用：
-
-- 手机浏览器直接访问
-- 或者你自己的 WebView/网页封装 App
-
-## 第十步：设备首次登录审批
+## 首次设备批准
 
 这是本项目最重要的安全机制之一。
 
@@ -282,6 +131,13 @@ powershell -ExecutionPolicy Bypass -File scripts/enable-mobile-codex-remote.ps1
 
 - 即使账号密码泄露，未知设备也不能直接登录
 - 你可以控制哪些手机被加入白名单
+
+## 可选：自己从源码构建
+
+如果你想自己维护、二次开发，或者重新生成便携发布目录，再看源码部署路线：
+
+- 中文：`docs/DEPLOYMENT.zh-CN.md`
+- English: `docs/DEPLOYMENT.md`
 
 ## 部署成功的判断标准
 
@@ -298,17 +154,22 @@ powershell -ExecutionPolicy Bypass -File scripts/enable-mobile-codex-remote.ps1
 
 如果你第一次部署就遇到问题，通常优先排查这 3 个地方：
 
-### 1. 上游目录版本或路径不对
+### 1. 程序目录不完整或位置被改动
 
-必须是：
+先确认这两件事：
 
-- 上游版本：`v1.25.2`
-- 目录名：`vendor/claudecodeui-1.25.2`
+- 你解压的是整个便携目录，而不是只拿出了其中的 `MobileCodexControl.exe`
+- 程序目录里没有误删 `vendor/claudecodeui-1.25.2`
 
-如果你不确定覆盖流程是否真的成功，可以先跑一遍：
+如果你是自己从源码构建的维护者，再额外确认：
+
+- 使用的是 `claudecodeui v1.25.2`
+- 目录名是 `vendor/claudecodeui-1.25.2`
+
+如果你想做源码覆盖自检，可以运行：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/smoke-test-override-flow.ps1 -UpstreamZip <你的上游zip路径>
+powershell -ExecutionPolicy Bypass -File scripts/smoke-test-override-flow.ps1 -UpstreamZip <你的程序源码压缩包路径>
 ```
 
 ### 2. 本机依赖路径没有被脚本找到
@@ -357,16 +218,27 @@ powershell -ExecutionPolicy Bypass -File scripts/stop-mobile-codex-stack.ps1
 powershell -ExecutionPolicy Bypass -File scripts/check-tailscale-status.ps1
 ```
 
-### 打包桌面工具
+### 维护者：打包桌面工具
 
 ```powershell
 scripts\package-mobile-codex-control.cmd
 ```
 
-### 干净上游覆盖自测
+### 维护者：生成便携发布目录
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/smoke-test-override-flow.ps1 -UpstreamZip <你的上游zip路径>
+scripts\package-mobile-codex-helper.cmd
+```
+
+说明：
+
+- 当前推荐发布形态就是“带内置运行环境的便携目录 + `MobileCodexControl.exe`”
+- 不再要求额外制作安装包
+
+### 维护者：源码覆盖自测
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/smoke-test-override-flow.ps1 -UpstreamZip <你的程序源码压缩包路径>
 ```
 
 ## 常见问题
