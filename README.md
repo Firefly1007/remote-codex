@@ -1,4 +1,4 @@
-# mobileCodexHelper
+# Remote-Codex
 
 把你电脑上本地运行的 Codex 会话，变成一个可以在手机上访问和控制的私有网页面板。
 
