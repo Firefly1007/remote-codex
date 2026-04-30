@@ -1,16 +1,13 @@
 # 贡献说明
 
-[中文](CONTRIBUTING.md) | [English](CONTRIBUTING.en.md)
-
-欢迎帮助改进这个项目。为了让仓库保持“新手可部署、安全边界清楚、最小必要代码”的方向，请优先遵守下面几条。
+欢迎帮助改进这个项目。为了让仓库保持”新手可部署、安全边界清楚、最小必要代码”的方向，请优先遵守下面几条。
 
 ## 先看什么
 
 开始前，建议先阅读：
 
 - `README.md`
-- `docs/DEPLOYMENT.zh-CN.md`
-- `SECURITY.zh-CN.md`
+- `SECURITY.md`
 
 ## 适合的贡献方向
 
@@ -31,10 +28,8 @@
 请至少做这些事：
 
 1. 确认没有真实 secret、日志、数据库、私有域名或个人路径
-2. 运行 `scripts/check-open-source-tree.ps1`
-3. 如果改了覆盖层，运行 `scripts/smoke-test-override-flow.ps1`
-4. 如果改了桌面工具，运行 `python -m py_compile mobile_codex_control.py`
-5. 如果改了文档，检查中英文入口是否一致
+2. 如果改了桌面工具，运行 `python -m py_compile mobile_codex_control.py`
+3. 如果改了文档，检查中英文入口是否一致
 
 ## Pull Request 建议
 
@@ -47,5 +42,5 @@
 ## 安全问题
 
 如果你发现的是认证绕过、设备信任绕过、secret 泄露等问题，请不要直接公开细节。  
-请先按 `SECURITY.zh-CN.md` 中的说明处理。
+请先按 `SECURITY.md` 中的说明处理。
 

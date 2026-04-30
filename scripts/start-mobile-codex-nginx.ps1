@@ -13,10 +13,17 @@ $nginxCmd = if ($env:MOBILE_CODEX_NGINX) {
   $env:MOBILE_CODEX_NGINX
 } else {
   $found = Get-Command nginx -ErrorAction SilentlyContinue
-  if (-not $found) {
-    throw 'nginx not found on PATH. Set MOBILE_CODEX_NGINX if needed.'
+  if ($found) { $found.Path }
+  else {
+    # Check common install locations
+    $candidates = @(
+      'D:\Program Files\nginx-1.30.0\nginx.exe',
+      'C:\nginx\nginx.exe'
+    )
+    $hit = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+    if ($hit) { $hit }
+    else { throw 'nginx not found. Set MOBILE_CODEX_NGINX env var or add nginx to PATH.' }
   }
-  $found.Path
 }
 
 $nginxRoot = Join-Path $asciiAlias '.runtime\nginx'

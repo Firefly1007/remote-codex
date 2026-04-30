@@ -1,3 +1,4 @@
+# pyright: reportOptionalMemberAccess=false
 from __future__ import annotations
 
 import argparse
@@ -76,6 +77,12 @@ def resolve_tailscale_path() -> Path:
     configured = os.environ.get("MOBILE_CODEX_TAILSCALE")
     if configured:
         return Path(configured)
+    for candidate in [
+        Path(r"C:\Program Files\Tailscale\tailscale.exe"),
+        Path(r"D:\Program Files\Tailscale\tailscale.exe"),
+    ]:
+        if candidate.exists():
+            return candidate
     return Path(r"C:\Program Files\Tailscale\tailscale.exe")
 
 
@@ -131,7 +138,7 @@ def resolve_auth_db_path() -> Path:
 
     candidates.extend(
         [
-            WORKSPACE / "vendor" / "claudecodeui-1.25.2" / "server" / "database" / "auth.db",
+            WORKSPACE / "server" / "database" / "auth.db",
             Path.home() / ".cloudcli" / "auth.db",
             Path.home() / ".codex" / "auth.db",
         ]
@@ -396,10 +403,14 @@ if ($listeners) {{
     listener_map: dict[int, ListenerInfo] = {}
     for item in items:
         try:
-            port = int(item.get("port"))
+            port_raw = item.get("port")
+            pid_raw = item.get("pid")
+            if port_raw is None or pid_raw is None:
+                continue
+            port = int(port_raw)
             listener_map[port] = ListenerInfo(
                 port=port,
-                pid=int(item.get("pid")),
+                pid=int(pid_raw),
                 name=str(item.get("name") or ""),
                 path=str(item.get("path") or ""),
             )
@@ -913,7 +924,7 @@ def perform_action(action: str) -> str:
             powershell_file("stop-mobile-codex-stack.ps1", timeout=20)
             if not wait_for(stack_is_stopped, timeout=10, interval=1.0):
                 listeners = get_listener_map()
-                remaining = [listeners.get(port) for port in (APP_PORT, PROXY_PORT) if listeners.get(port)]
+                remaining = [item for port in (APP_PORT, PROXY_PORT) if (item := listeners.get(port))]
                 detail = "；".join(item.summary() for item in remaining) if remaining else "端口探测仍显示服务未完全退出"
                 raise RuntimeError(f"停止命令已执行，但本地端口仍未完全释放：{detail}")
         return "整套服务已停止"
@@ -960,7 +971,7 @@ class ControlApp:
         self.last_refresh_text = tk.StringVar(value="尚未刷新")
         self.local_url_text = tk.StringVar(value=f"本地面板：{LOCAL_PANEL_URL}")
         self.remote_url_text = tk.StringVar(value="远程地址：未开启")
-        self.block_labels: list[dict[str, tk.Label]] = []
+        self.block_labels: list[dict[str, Any]] = []
         self.metric_widgets: dict[str, dict[str, Any]] = {}
         self.pending_approval_items: list[dict[str, Any]] = []
         self.selected_approval_token: str | None = None
@@ -1203,14 +1214,14 @@ class ControlApp:
         self.requests_text = self._build_text_panel(bottom, "最近手机访问")
         self.diagnostics_text = self._build_text_panel(bottom, "诊断信息")
 
-    def _build_text_panel(self, parent: tk.PanedWindow, title: str) -> tk.Text:
+    def _build_text_panel(self, parent: Any, title: str) -> Any:
         frame = tk.Frame(parent, bg="white", bd=1, relief="solid")
         parent.add(frame, stretch="always")
 
         tk.Label(frame, text=title, font=("Microsoft YaHei UI", 11, "bold"), bg="white", fg="#10243d").pack(anchor="w", padx=10, pady=(10, 6))
         return self._build_text_panel_body(frame)
 
-    def _build_text_panel_body(self, parent: tk.Frame, height: int = 18) -> tk.Text:
+    def _build_text_panel_body(self, parent: Any, height: int = 18) -> Any:
         text_frame = tk.Frame(parent, bg="white")
         text_frame.pack(fill="both", expand=True, padx=10, pady=(0, 10))
         scrollbar = tk.Scrollbar(text_frame)
@@ -1229,7 +1240,7 @@ class ControlApp:
         scrollbar.config(command=text.yview)
         return text
 
-    def _render_text(self, widget: tk.Text, content: str) -> None:
+    def _render_text(self, widget: Any, content: str) -> None:
         widget.configure(state="normal")
         widget.delete("1.0", "end")
         widget.insert("1.0", content)
@@ -1376,7 +1387,7 @@ class ControlApp:
                 message = task()
                 self.root.after(0, lambda: self.status_text.set(message))
             except Exception as exc:  # noqa: BLE001
-                self.root.after(0, lambda: self.status_text.set(f"操作失败：{exc}"))
+                self.root.after(0, lambda e=exc: self.status_text.set(f"操作失败：{e}"))
             finally:
                 self.root.after(0, self._mark_idle)
 

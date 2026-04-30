@@ -2,7 +2,7 @@ $workspace = Split-Path -Parent $PSScriptRoot
 $repo = if ($env:MOBILE_CODEX_UPSTREAM_DIR) {
   $env:MOBILE_CODEX_UPSTREAM_DIR
 } else {
-  Join-Path $workspace 'vendor\claudecodeui-1.25.2'
+  $workspace
 }
 
 if (-not (Test-Path $repo)) {

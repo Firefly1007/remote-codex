@@ -48,9 +48,7 @@ body:
     id: checks
     attributes:
       label: 你已经做过的检查
-      description: 推荐附上 `scripts/check-mobile-codex-runtime.ps1` 的脱敏结果
       placeholder: |
-        - `check-mobile-codex-runtime.ps1` 输出：
         - `http://127.0.0.1:3001` 是否可打开：
         - 桌面工具状态：
     validations:

@@ -1,59 +1,57 @@
-# Security Policy
+# 安全策略
 
-[中文](SECURITY.zh-CN.md) | [English](SECURITY.md)
 
-## Who this is for
+## 这份文件是给谁看的
 
-This file is mainly for:
+这份文件主要给两类人看：
 
-- people who want to deploy this for their own long-term use
-- people who want to publish their own fork safely
+- 想自己部署并长期自用的人
+- 想把自己的改动再次公开发布的人
 
-If your goal is simply “safe enough for self-use”, remember these three rules first:
+如果你只是想“尽量安全地自己用”，请先记住下面三条：
 
-1. keep the app bound to `127.0.0.1`
-2. prefer a private network such as Tailscale instead of direct public exposure
-3. require desktop approval for every new device
+1. 只让应用监听 `127.0.0.1`
+2. 优先走 Tailscale 这类私网，不要直接裸露公网
+3. 新设备第一次登录必须经过电脑端批准
 
-## Supported deployment model
+## 支持的部署模型
 
-The supported model is:
+推荐部署方式：
 
-- local app bound to `127.0.0.1`
-- reverse proxy in front of the app
-- private network access first, ideally Tailscale
-- device whitelist plus desktop approval for new phones
+- 应用只监听 `127.0.0.1`
+- 前面加一层反向代理
+- 优先走私网访问，推荐 Tailscale
+- 新手机首次登录需要桌面端批准
 
-This is the model the scripts and docs are designed around.  
-If you change it into public exposure, multi-user access, or approval-free login, you are outside the default security boundary of this repository.
+这也是本项目文档和脚本默认围绕的模型。  
+如果你主动改成公网开放、多用户或无人审批模式，就已经超出本仓库默认的安全边界了。
 
-## Not recommended
+## 不推荐做法
 
-The following are intentionally outside the safe default model:
+以下做法不属于安全默认模型：
 
-- exposing the Node app directly to the public internet
-- disabling hardened mode without re-auditing the trust model
-- committing databases, logs, or build artifacts
-- shipping real secrets inside `.env` files or docs
+- 将 Node 应用直接暴露到公网
+- 在未重新审计信任模型前关闭 hardened mode
+- 把数据库、日志、构建产物提交到 git
+- 在 `.env`、文档或脚本里写入真实 secret
 
-## Secret handling rules
+## Secret 处理规则
 
-Never commit:
+绝对不要提交：
 
-- auth databases
-- JWT secrets
-- private keys
-- live Tailscale hostnames tied to your personal tailnet
-- logs containing tokens or user traffic
+- 认证数据库
+- JWT secret
+- 私钥
+- 绑定你个人 tailnet 的真实域名
+- 含 token 或用户流量信息的日志
 
-Before publishing, re-run:
+如果你打算公开发布，请在发版前再检查一次：
 
-- `scripts/check-open-source-tree.ps1`
-- `docs/OPEN_SOURCE_RELEASE_CHECKLIST.md`
+- `docs/OPEN_SOURCE_RELEASE_CHECKLIST.zh-CN.md`
 
-If an older private build ever exposed query-string tokens or other session material, rotate the auth database or JWT secret before publishing.
+如果旧版私有构建曾暴露过 query token 或其他会话材料，请在公开发布前先轮换真实运行环境中的 auth DB / JWT secret。
 
-## Reporting guidance
+## 漏洞反馈
 
-- For non-sensitive bugs, open a public GitHub issue.
-- For security-sensitive findings, replace this section with your private contact channel before publishing.
+- 普通问题可走公开 GitHub issue
+- 安全漏洞建议在你正式公开仓库前，先配置一个私密反馈渠道，再替换本文件中的说明

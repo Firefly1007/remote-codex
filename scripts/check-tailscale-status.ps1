@@ -1,11 +1,13 @@
 $tailscale = if ($env:MOBILE_CODEX_TAILSCALE) {
   $env:MOBILE_CODEX_TAILSCALE
 } else {
-  'C:\Program Files\Tailscale\tailscale.exe'
+  $c = 'C:\Program Files\Tailscale\tailscale.exe'
+  $d = 'D:\Program Files\Tailscale\tailscale.exe'
+  if (Test-Path $c) { $c } elseif (Test-Path $d) { $d } else { $c }
 }
 
 if (-not (Test-Path $tailscale)) {
-  throw "Tailscale CLI not found: $tailscale"
+  throw "Tailscale CLI not found: $tailscale. Set MOBILE_CODEX_TAILSCALE env var."
 }
 
 $status = & $tailscale status --json | ConvertFrom-Json

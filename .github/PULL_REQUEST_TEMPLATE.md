@@ -16,8 +16,6 @@
 - [ ] 本地手动验证过
 - [ ] 运行过相关脚本语法检查
 - [ ] 运行过 `python -m py_compile mobile_codex_control.py`
-- [ ] 运行过 `scripts/check-open-source-tree.ps1`
-- [ ] 运行过 `scripts/smoke-test-override-flow.ps1`
 
 请补充必要的验证说明：
 
