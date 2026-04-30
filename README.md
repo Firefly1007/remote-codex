@@ -400,6 +400,31 @@ mobile-codex-helper/
 
 请保留上游归属说明、本仓库中的许可证、以及对上游改动的说明。
 
+## 贡献者
+
+感谢以下上游项目的贡献者：
+
+### [siteboon/claudecodeui](https://github.com/siteboon/claudecodeui)
+
+[@viper151](https://github.com/viper151)
+[@blackmammoth](https://github.com/blackmammoth)
+[@EricBlanquer](https://github.com/EricBlanquer)
+[@lvalics](https://github.com/lvalics)
+[@DumoeDss](https://github.com/DumoeDss)
+[@PaloSP](https://github.com/PaloSP)
+[@NobitaYuan](https://github.com/NobitaYuan)
+[@menny](https://github.com/menny)
+[@itsmepicus](https://github.com/itsmepicus)
+[@unsystemizer](https://github.com/unsystemizer)
+
+### [StarsTom/mobileCodexHelper](https://github.com/StarsTom/mobileCodexHelper)
+
+[@StarsTom](https://github.com/StarsTom)
+
+### 本仓库
+
+[@Firefly1007](https://github.com/Firefly1007)
+
 ## 发布前建议
 
 如果你打算把你自己的改动再公开发布，至少先通读一次 [`SECURITY.md`](SECURITY.md)。

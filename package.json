@@ -45,7 +45,7 @@
     "ui",
     "mobile"
   ],
-  "author": "CloudCLI UI Contributors",
+  "author": "Firefly1007",
   "license": "GPL-3.0",
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.59",
