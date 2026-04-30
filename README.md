@@ -1,6 +1,6 @@
 # Remote-Codex
 
-> 基于 [siteboon/claudecodeui](https://github.com/siteboon/claudecodeui) 构建，在其基础上增加了手机远程控制、设备审批、安全收敛等能力。
+> 基于 [siteboon/claudecodeui](https://github.com/siteboon/claudecodeui) 和 [StarsTom/mobileCodexHelper](https://github.com/StarsTom/mobileCodexHelper) 构建。
 
 把你电脑上本地运行的 Codex 会话，变成一个可以在手机上访问和控制的私有网页面板。
 
