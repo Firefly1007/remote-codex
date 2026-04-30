@@ -1,26 +1,26 @@
-# Upstream Overrides
+# 上游覆盖文件
 
-This directory contains patched files that are applied on top of the upstream project:
+本目录包含对上游项目的补丁文件：
 
-- **Upstream**: [siteboon/claudecodeui](https://github.com/siteboon/claudecodeui)
-- **Tested version**: v1.25.2
-- **Upstream license**: GPL-3.0
+- **上游项目**：[siteboon/claudecodeui](https://github.com/siteboon/claudecodeui)
+- **适配版本**：v1.25.2
+- **上游许可证**：GPL-3.0
 
-## What these overrides do
+## 覆盖内容
 
-The files in `claudecodeui-1.25.2/` are modified versions of upstream source files. They add:
+`claudecodeui-1.25.2/` 中的文件是上游源文件的修改版本，主要增加了：
 
-- **Hardened mode**: restricts the app to Codex-only functionality by default (`CODEX_ONLY_HARDENED_MODE`)
-- **Device trust**: first-time device approval flow for new phone logins
-- **Cookie-based auth**: session management suitable for WebView and mobile browser environments
-- **Windows path compatibility**: ASCII-safe working directory aliases for paths with non-ASCII characters
+- **Hardened mode**：默认仅开放 Codex 功能（`CODEX_ONLY_HARDENED_MODE`）
+- **设备审批**：新手机首次登录需电脑端批准
+- **Cookie 认证**：适配 WebView 和移动端浏览器的会话管理
+- **Windows 路径兼容**：非 ASCII 路径的 ASCII 安全别名
 
-## How to apply
+## 应用方法
 
-1. Download upstream `siteboon/claudecodeui` v1.25.2 into `vendor/claudecodeui-1.25.2/`
-2. Copy the contents of `claudecodeui-1.25.2/` into the upstream checkout, overwriting existing files
-3. Run `npm install` in the upstream directory
+1. 下载上游 `siteboon/claudecodeui` v1.25.2 到 `vendor/claudecodeui-1.25.2/`
+2. 将 `claudecodeui-1.25.2/` 中的文件复制到上游目录，覆盖原文件
+3. 在上游目录执行 `npm install`
 
-## Attribution
+## 归属
 
-This project builds on the work of [siteboon/claudecodeui](https://github.com/siteboon/claudecodeui). The upstream project is licensed under GPL-3.0. All modifications in this directory are provided under the same license.
+本项目基于 [siteboon/claudecodeui](https://github.com/siteboon/claudecodeui) 的工作。上游项目采用 GPL-3.0 许可证，本目录中的所有修改同样遵循该许可证。

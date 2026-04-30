@@ -1,32 +1,29 @@
 # 说明
 
-这个仓库不是完整替代上游，而是一个”在上游基础上追加手机控制与安全收敛”的辅助层。
+## 上游项目
 
-如果你是第一次接触这个项目，请理解成：
+本项目基于 [siteboon/claudecodeui](https://github.com/siteboon/claudecodeui) 构建。
 
-- 你先准备上游 `siteboon/claudecodeui`
-- 再把当前仓库的覆盖文件应用上去
-- 最后按照 README/部署文档启动和使用
+- 上游项目：[siteboon/claudecodeui](https://github.com/siteboon/claudecodeui)
+- 适配测试版本：v1.25.2
+- 上游许可证：GPL-3.0
 
-这个辅助层是建立在上游项目基础上的：
+claudecodeui 是一个基于 Web 的 AI 编程助手 UI，支持 Claude、Codex、Cursor、Gemini 等多种 Provider。
+本项目在其基础上增加了手机远程控制、设备审批、安全收敛等能力。
 
-- 上游项目：`siteboon/claudecodeui`
-- 适配测试版本：`v1.25.2`
-- 上游许可证：`GPL-3.0`
+## 本项目的改动
 
-当前目录刻意不包含以下内容：
+相对于上游 claudecodeui，本项目主要新增和修改了以下内容：
 
-- 个人数据库
-- 运行日志
-- 打包好的二进制
-- `node_modules`
-- 私有主机名或个人路径
-- 超出最小必要范围的完整上游源码快照
+- `mobile_codex_control.py` — Windows 桌面控制台（tkinter GUI），用于启停服务、管理设备审批、查看状态
+- `upstream-overrides/` — 对上游 server/ 的补丁文件，包括：
+  - hardened mode（仅开放 Codex 功能）
+  - 设备首次登录审批机制
+  - Cookie + Bearer + WebSocket 多层认证兼容
+  - Windows 非 ASCII 路径的 ASCII 安全别名
+- `scripts/` — PowerShell 服务管理脚本（启停、Tailscale 远程、状态检查）
+- `deploy/` — nginx / Caddy 部署配置模板
 
-这样做的目的，是尽量降低公开仓库里误带个人环境数据的风险。
+## 许可证
 
-在公开发布前，请先检查：
-
-- [`docs/OPEN_SOURCE_RELEASE_CHECKLIST.zh-CN.md`](docs/OPEN_SOURCE_RELEASE_CHECKLIST.zh-CN.md)
-
-如果你曾经在私有部署中使用过真实 secret、旧版 query token 或其他可能泄露会话的方案，请先在真实运行环境里完成 secret 轮换。
+本项目及上游项目均采用 GPL-3.0 许可证。详见 [LICENSE](LICENSE)。

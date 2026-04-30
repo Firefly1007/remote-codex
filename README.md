@@ -1,5 +1,7 @@
 # Remote-Codex
 
+> 基于 [siteboon/claudecodeui](https://github.com/siteboon/claudecodeui) 构建，在其基础上增加了手机远程控制、设备审批、安全收敛等能力。
+
 把你电脑上本地运行的 Codex 会话，变成一个可以在手机上访问和控制的私有网页面板。
 
 这个项目适合下面这种需求：
@@ -380,13 +382,23 @@ mobile-codex-helper/
 - 安全策略：[`SECURITY.md`](SECURITY.md)
 - 开源发布检查清单：[`docs/OPEN_SOURCE_RELEASE_CHECKLIST.zh-CN.md`](docs/OPEN_SOURCE_RELEASE_CHECKLIST.zh-CN.md)
 
-## 上游与许可证
+## 项目来源
 
-本项目基于上游 `siteboon/claudecodeui` 工作，请保留：
+本项目基于以下两个上游项目构建：
 
-- 上游归属说明
-- 本仓库中的许可证
-- 对上游改动的说明
+| 上游项目 | 说明 | 许可证 |
+|----------|------|--------|
+| [siteboon/claudecodeui](https://github.com/siteboon/claudecodeui) | Web UI 基础框架，提供项目/会话/消息管理、WebSocket 通信、认证系统等核心能力 | GPL-3.0 |
+| [StarsTom/mobileCodexHelper](https://github.com/StarsTom/mobileCodexHelper) | 桌面控制工具、部署脚本、设备审批机制等手机控制层 | GPL-3.0 |
+
+本项目在上游基础上主要增加了：
+
+- `mobile_codex_control.py` — Windows 桌面控制台（tkinter GUI）
+- `upstream-overrides/` — 对 claudecodeui 的补丁文件（hardened mode、设备审批、Cookie 认证、Windows 路径兼容）
+- `scripts/` — 服务启停、Tailscale 远程访问等 PowerShell 脚本
+- `deploy/` — nginx / Caddy 部署配置模板
+
+请保留上游归属说明、本仓库中的许可证、以及对上游改动的说明。
 
 ## 发布前建议
 
