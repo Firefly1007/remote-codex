@@ -442,7 +442,7 @@ async function saveProjectConfig(config) {
 // Generate better display name from path
 async function generateDisplayName(projectName, actualProjectDir = null) {
   // Use actual project directory if provided, otherwise decode from project name
-  let projectPath = actualProjectDir || projectName.replace(/-/g, '/');
+  let projectPath = actualProjectDir || decodeProjectName(projectName);
 
   // Try to read package.json from the project path
   try {
@@ -466,6 +466,16 @@ async function generateDisplayName(projectName, actualProjectDir = null) {
   }
 
   return projectPath;
+}
+
+// Decode project name back to a filesystem path
+// Handles Windows drive letter pattern: d--Code-trip -> D:\Code\trip
+function decodeProjectName(projectName) {
+  const driveMatch = projectName.match(/^([a-zA-Z])--(.+)$/);
+  if (driveMatch) {
+    return driveMatch[1].toUpperCase() + ':\\' + driveMatch[2].replace(/-/g, '\\');
+  }
+  return projectName.replace(/-/g, '/');
 }
 
 // Extract the actual project directory from JSONL sessions (with caching)
@@ -499,7 +509,7 @@ async function extractProjectDirectory(projectName) {
 
     if (jsonlFiles.length === 0) {
       // Fall back to decoded project name if no sessions
-      extractedPath = projectName.replace(/-/g, '/');
+      extractedPath = decodeProjectName(projectName);
     } else {
       // Process all JSONL files to collect cwd values
       for (const file of jsonlFiles) {
@@ -536,7 +546,7 @@ async function extractProjectDirectory(projectName) {
       // Determine the best cwd to use
       if (cwdCounts.size === 0) {
         // No cwd found, fall back to decoded project name
-        extractedPath = projectName.replace(/-/g, '/');
+        extractedPath = decodeProjectName(projectName);
       } else if (cwdCounts.size === 1) {
         // Only one cwd, use it
         extractedPath = Array.from(cwdCounts.keys())[0];
@@ -560,7 +570,7 @@ async function extractProjectDirectory(projectName) {
 
         // Fallback (shouldn't reach here)
         if (!extractedPath) {
-          extractedPath = latestCwd || projectName.replace(/-/g, '/');
+          extractedPath = latestCwd || decodeProjectName(projectName);
         }
       }
     }
@@ -573,11 +583,11 @@ async function extractProjectDirectory(projectName) {
   } catch (error) {
     // If the directory doesn't exist, just use the decoded project name
     if (error.code === 'ENOENT') {
-      extractedPath = projectName.replace(/-/g, '/');
+      extractedPath = decodeProjectName(projectName);
     } else {
       console.error(`Error extracting project directory for ${projectName}:`, error);
       // Fall back to decoded project name for other errors
-      extractedPath = projectName.replace(/-/g, '/');
+      extractedPath = decodeProjectName(projectName);
     }
 
     // Cache the fallback result too
@@ -760,7 +770,7 @@ async function getProjects(progressCallback = null) {
           actualProjectDir = await extractProjectDirectory(projectName);
         } catch (error) {
           // Fall back to decoded project name
-          actualProjectDir = projectName.replace(/-/g, '/');
+          actualProjectDir = decodeProjectName(projectName);
         }
       }
 

@@ -22,7 +22,8 @@
     "shell": "Shell",
     "files": "Files",
     "git": "Source Control",
-    "tasks": "Tasks"
+    "tasks": "Tasks",
+    "structure": "Structure"
   },
   "status": {
     "loading": "Loading...",
@@ -256,6 +257,16 @@
   },
   "image": {
     "remove": "Remove image"
+  },
+  "structure": {
+    "loading": "Loading structure...",
+    "noFileSelected": "Select a file to preview",
+    "noFilesFound": "No files found",
+    "back": "Back to tree",
+    "binaryFile": "Binary file (cannot preview)",
+    "refresh": "Refresh",
+    "selectProject": "Select a project to view its structure",
+    "fileTooLarge": "File too large to preview"
   },
   "commandMenu": {
     "availableCommands": "Available commands",

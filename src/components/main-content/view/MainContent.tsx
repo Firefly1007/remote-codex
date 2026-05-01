@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import ChatInterface from '../../chat/view/ChatInterface';
+import ProjectStructure from '../../project-structure/view/ProjectStructure';
 import FileTree from '../../file-tree/view/FileTree';
 import StandaloneShell from '../../standalone-shell/view/StandaloneShell';
 import GitPanel from '../../git-panel/view/GitPanel';
@@ -149,6 +150,12 @@ function MainContent({
               />
             </ErrorBoundary>
           </div>
+
+          {activeTab === 'structure' && (
+            <div className="h-full overflow-hidden">
+              <ProjectStructure selectedProject={selectedProject} isMobile={isMobile} />
+            </div>
+          )}
 
           {!IS_CODEX_ONLY_HARDENED && activeTab === 'files' && (
             <div className="h-full overflow-hidden">

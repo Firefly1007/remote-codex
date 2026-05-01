@@ -22,7 +22,8 @@
     "shell": "终端",
     "files": "文件",
     "git": "源代码管理",
-    "tasks": "任务"
+    "tasks": "任务",
+    "structure": "项目结构"
   },
   "status": {
     "loading": "加载中...",
@@ -256,6 +257,16 @@
   },
   "image": {
     "remove": "移除图片"
+  },
+  "structure": {
+    "loading": "正在加载结构...",
+    "noFileSelected": "选择文件以预览",
+    "noFilesFound": "未找到文件",
+    "back": "返回目录树",
+    "binaryFile": "二进制文件（无法预览）",
+    "refresh": "刷新",
+    "selectProject": "选择项目以查看其结构",
+    "fileTooLarge": "文件过大，无法预览"
   },
   "commandMenu": {
     "availableCommands": "可用命令",

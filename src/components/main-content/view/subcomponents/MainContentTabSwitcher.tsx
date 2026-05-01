@@ -1,4 +1,4 @@
-import { MessageSquare, Terminal, Folder, GitBranch, ClipboardCheck, type LucideIcon } from 'lucide-react';
+import { MessageSquare, Terminal, Folder, GitBranch, ClipboardCheck, FolderTree, type LucideIcon } from 'lucide-react';
 import type { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tooltip, PillBar, Pill } from '../../../../shared/view/ui';
@@ -44,6 +44,13 @@ const TASKS_TAB: BuiltInTab = {
   icon: ClipboardCheck,
 };
 
+const STRUCTURE_TAB: BuiltInTab = {
+  kind: 'builtin',
+  id: 'structure',
+  labelKey: 'tabs.structure',
+  icon: FolderTree,
+};
+
 export default function MainContentTabSwitcher({
   activeTab,
   setActiveTab,
@@ -53,19 +60,30 @@ export default function MainContentTabSwitcher({
   const { plugins } = usePlugins();
 
   if (IS_CODEX_ONLY_HARDENED) {
+    const hardenedTabs: BuiltInTab[] = [
+      { kind: 'builtin', id: 'chat', labelKey: 'tabs.chat', icon: MessageSquare },
+      STRUCTURE_TAB,
+    ];
     return (
       <PillBar>
-        <Tooltip content={t('tabs.chat')} position="bottom">
-          <Pill isActive onClick={() => setActiveTab('chat')} className="px-2.5 py-[5px]">
-            <MessageSquare className="h-3.5 w-3.5" strokeWidth={2.2} />
-            <span className="hidden lg:inline">{t('tabs.chat')}</span>
-          </Pill>
-        </Tooltip>
+        {hardenedTabs.map((tab) => {
+          const isActive = tab.id === activeTab;
+          return (
+            <Tooltip key={tab.id} content={t(tab.labelKey)} position="bottom">
+              <Pill isActive={isActive} onClick={() => setActiveTab(tab.id)} className="px-2.5 py-[5px]">
+                <tab.icon className="h-3.5 w-3.5" strokeWidth={isActive ? 2.2 : 1.8} />
+                <span className="hidden lg:inline">{t(tab.labelKey)}</span>
+              </Pill>
+            </Tooltip>
+          );
+        })}
       </PillBar>
     );
   }
 
-  const builtInTabs: BuiltInTab[] = shouldShowTasksTab ? [...BASE_TABS, TASKS_TAB] : BASE_TABS;
+  const builtInTabs: BuiltInTab[] = shouldShowTasksTab
+    ? [...BASE_TABS, TASKS_TAB, STRUCTURE_TAB]
+    : [...BASE_TABS, STRUCTURE_TAB];
 
   const pluginTabs: PluginTab[] = plugins
     .filter((p) => p.enabled)

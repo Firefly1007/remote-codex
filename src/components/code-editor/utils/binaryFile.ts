@@ -20,3 +20,10 @@ export const isBinaryFile = (filename: string): boolean => {
   const ext = filename.split('.').pop()?.toLowerCase();
   return BINARY_EXTENSIONS.includes(ext ?? '');
 };
+
+const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp', 'ico', 'avif'];
+
+export const isImageFile = (filename: string): boolean => {
+  const ext = filename.split('.').pop()?.toLowerCase();
+  return IMAGE_EXTENSIONS.includes(ext ?? '');
+};

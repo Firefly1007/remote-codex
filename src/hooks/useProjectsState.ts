@@ -114,8 +114,8 @@ const isUpdateAdditive = (
 };
 
 const VALID_TABS: Set<string> = IS_CODEX_ONLY_HARDENED
-  ? new Set(['chat'])
-  : new Set(['chat', 'files', 'shell', 'git', 'tasks', 'preview']);
+  ? new Set(['chat', 'structure'])
+  : new Set(['chat', 'files', 'shell', 'git', 'tasks', 'preview', 'structure']);
 
 const isValidTab = (tab: string): tab is AppTab => {
   return VALID_TABS.has(tab) || tab.startsWith('plugin:');
