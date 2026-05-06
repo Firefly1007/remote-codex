@@ -49,6 +49,7 @@ import { queryClaudeSDK, abortClaudeSDKSession, isClaudeSDKSessionActive, getAct
 import { spawnCursor, abortCursorSession, isCursorSessionActive, getActiveCursorSessions } from './cursor-cli.js';
 import { queryCodex, abortCodexSession, isCodexSessionActive, getActiveCodexSessions } from './openai-codex.js';
 import { spawnGemini, abortGeminiSession, isGeminiSessionActive, getActiveGeminiSessions } from './gemini-cli.js';
+import { queryKimi, abortKimiSession, getActiveKimiSessions } from './kimi-cli.js';
 import sessionManager from './sessionManager.js';
 import gitRoutes from './routes/git.js';
 import authRoutes from './routes/auth.js';
@@ -1592,6 +1593,11 @@ function handleChatConnection(ws) {
                 console.log('🔄 Session:', data.options?.sessionId ? 'Resume' : 'New');
                 console.log('🤖 Model:', data.options?.model || 'default');
                 await spawnGemini(data.command, data.options, writer);
+            } else if (data.type === 'kimi-command') {
+                console.log('[DEBUG] Kimi message:', data.command || '[Continue/Resume]');
+                console.log('📁 Project:', data.options?.projectPath || data.options?.cwd || 'Unknown');
+                console.log('🔄 Session:', data.options?.sessionId ? 'Resume' : 'New');
+                await queryKimi(data.command, data.options, writer);
             } else if (data.type === 'cursor-resume') {
                 // Backward compatibility: treat as cursor-command with resume and no prompt
                 console.log('[DEBUG] Cursor resume session (compat):', data.sessionId);
@@ -1610,6 +1616,8 @@ function handleChatConnection(ws) {
                     success = abortCodexSession(data.sessionId);
                 } else if (provider === 'gemini') {
                     success = abortGeminiSession(data.sessionId);
+                } else if (provider === 'kimi') {
+                    success = await abortKimiSession(data.sessionId);
                 } else {
                     // Use Claude Agents SDK
                     success = await abortClaudeSDKSession(data.sessionId);

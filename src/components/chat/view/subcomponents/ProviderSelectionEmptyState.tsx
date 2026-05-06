@@ -302,6 +302,9 @@ export default function ProviderSelectionEmptyState({
                   gemini: t("providerSelection.readyPrompt.gemini", {
                     model: geminiModel,
                   }),
+                  kimi: t("providerSelection.readyPrompt.kimi", {
+                    defaultValue: "Ready to use Kimi. Start typing your message below.",
+                  }),
                 }[provider]
               }
             </p>

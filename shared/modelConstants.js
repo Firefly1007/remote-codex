@@ -90,3 +90,16 @@ export const GEMINI_MODELS = {
 
   DEFAULT: "gemini-2.5-flash",
 };
+
+/**
+ * Kimi Models
+ */
+export const KIMI_MODELS = {
+  OPTIONS: [
+    { value: "kimi-latest", label: "Kimi Latest" },
+    { value: "kimi-k2", label: "Kimi K2" },
+    { value: "kimi-k2-thinking", label: "Kimi K2 (Thinking)" },
+  ],
+
+  DEFAULT: "kimi-latest",
+};

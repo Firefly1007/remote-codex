@@ -12,7 +12,7 @@ import type {
 import { useDropzone } from 'react-dropzone';
 import { authenticatedFetch } from '../../../utils/api';
 import { IS_CODEX_ONLY_HARDENED } from '../../../constants/config';
-import { thinkingModes } from '../constants/thinkingModes';
+import { getThinkingModeById } from '../constants/providerThinkingConfigs';
 import { grantClaudeToolPermission } from '../utils/chatPermissions';
 import { safeLocalStorage } from '../utils/chatStorage';
 import type {
@@ -44,7 +44,7 @@ interface UseChatComposerStateArgs {
   isLoading: boolean;
   canAbortSession: boolean;
   tokenBudget: Record<string, unknown> | null;
-  sendMessage: (message: unknown) => void;
+  sendMessage: (message: unknown) => boolean;
   sendByCtrlEnter?: boolean;
   onSessionActive?: (sessionId?: string | null) => void;
   onSessionProcessing?: (sessionId?: string | null) => void;
@@ -132,6 +132,7 @@ export function useChatComposerState({
     ((event: FormEvent<HTMLFormElement> | MouseEvent | TouchEvent | KeyboardEvent<HTMLTextAreaElement>) => Promise<void>) | null
   >(null);
   const inputValueRef = useRef(input);
+  const submittingRef = useRef(false);
 
   const handleBuiltInCommand = useCallback(
     (result: CommandExecutionResult) => {
@@ -479,211 +480,249 @@ export function useChatComposerState({
     ) => {
       event.preventDefault();
       const currentInput = inputValueRef.current;
-      if (!currentInput.trim() || isLoading || !selectedProject) {
+      if (!currentInput.trim() || isLoading || !selectedProject || submittingRef.current) {
         return;
       }
 
-      // Intercept slash commands: if input starts with /commandName, execute as command with args
-      const trimmedInput = currentInput.trim();
-      if (trimmedInput.startsWith('/')) {
-        const firstSpace = trimmedInput.indexOf(' ');
-        const commandName = firstSpace > 0 ? trimmedInput.slice(0, firstSpace) : trimmedInput;
-        const matchedCommand = slashCommands.find((cmd: SlashCommand) => cmd.name === commandName);
-        if (matchedCommand) {
-          executeCommand(matchedCommand, trimmedInput);
-          setInput('');
-          inputValueRef.current = '';
-          setAttachedImages([]);
-          setUploadingImages(new Map());
-          setImageErrors(new Map());
-          resetCommandMenuState();
-          setIsTextareaExpanded(false);
-          if (textareaRef.current) {
-            textareaRef.current.style.height = 'auto';
+      submittingRef.current = true;
+
+      try {
+        // Intercept slash commands: if input starts with /commandName, execute as command with args
+        const trimmedInput = currentInput.trim();
+        if (trimmedInput.startsWith('/')) {
+          const firstSpace = trimmedInput.indexOf(' ');
+          const commandName = firstSpace > 0 ? trimmedInput.slice(0, firstSpace) : trimmedInput;
+          const matchedCommand = slashCommands.find((cmd: SlashCommand) => cmd.name === commandName);
+          if (matchedCommand) {
+            executeCommand(matchedCommand, trimmedInput);
+            setInput('');
+            inputValueRef.current = '';
+            setAttachedImages([]);
+            setUploadingImages(new Map());
+            setImageErrors(new Map());
+            resetCommandMenuState();
+            setIsTextareaExpanded(false);
+            if (textareaRef.current) {
+              textareaRef.current.style.height = 'auto';
+            }
+            return;
           }
-          return;
         }
-      }
 
-      let messageContent = currentInput;
-      const selectedThinkingMode = thinkingModes.find((mode: { id: string; prefix?: string }) => mode.id === thinkingMode);
-      if (selectedThinkingMode && selectedThinkingMode.prefix) {
-        messageContent = `${selectedThinkingMode.prefix}: ${currentInput}`;
-      }
+        let messageContent = currentInput;
+        const selectedThinkingMode = getThinkingModeById(provider, thinkingMode);
+        if (selectedThinkingMode?.prefix) {
+          messageContent = `${selectedThinkingMode.prefix}: ${currentInput}`;
+        }
+        const thinkingParam = selectedThinkingMode?.thinkingParam;
 
-      let uploadedImages: unknown[] = [];
-      if (!IS_CODEX_ONLY_HARDENED && attachedImages.length > 0) {
-        const formData = new FormData();
-        attachedImages.forEach((file) => {
-          formData.append('images', file);
-        });
-
-        try {
-          const response = await authenticatedFetch(`/api/projects/${selectedProject.name}/upload-images`, {
-            method: 'POST',
-            headers: {},
-            body: formData,
+        let uploadedImages: unknown[] = [];
+        if (!IS_CODEX_ONLY_HARDENED && attachedImages.length > 0) {
+          const formData = new FormData();
+          attachedImages.forEach((file) => {
+            formData.append('images', file);
           });
 
-          if (!response.ok) {
-            throw new Error('Failed to upload images');
+          try {
+            const response = await authenticatedFetch(`/api/projects/${selectedProject.name}/upload-images`, {
+              method: 'POST',
+              headers: {},
+              body: formData,
+            });
+
+            if (!response.ok) {
+              throw new Error('Failed to upload images');
+            }
+
+            const result = await response.json();
+            uploadedImages = result.images;
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            console.error('Image upload failed:', error);
+            setChatMessages((previous) => [
+              ...previous,
+              {
+                type: 'error',
+                content: `Failed to upload images: ${message}`,
+                timestamp: new Date(),
+              },
+            ]);
+            return;
+          }
+        }
+
+        const effectiveSessionId =
+          currentSessionId || selectedSession?.id || sessionStorage.getItem('cursorSessionId');
+
+        const getToolsSettings = () => {
+          try {
+            const settingsKey =
+              provider === 'cursor'
+                ? 'cursor-tools-settings'
+                : provider === 'codex'
+                  ? 'codex-settings'
+                  : provider === 'gemini'
+                    ? 'gemini-settings'
+                    : 'claude-settings';
+            const savedSettings = safeLocalStorage.getItem(settingsKey);
+            if (savedSettings) {
+              return JSON.parse(savedSettings);
+            }
+          } catch (error) {
+            console.error('Error loading tools settings:', error);
           }
 
-          const result = await response.json();
-          uploadedImages = result.images;
-        } catch (error) {
-          const message = error instanceof Error ? error.message : 'Unknown error';
-          console.error('Image upload failed:', error);
+          return {
+            allowedTools: [],
+            disallowedTools: [],
+            skipPermissions: false,
+          };
+        };
+
+        const toolsSettings = getToolsSettings();
+        const resolvedProjectPath = selectedProject.fullPath || selectedProject.path || '';
+
+        let sendSucceeded = false;
+        if (provider === 'cursor') {
+          sendSucceeded = sendMessage({
+            type: 'cursor-command',
+            command: messageContent,
+            sessionId: effectiveSessionId,
+            options: {
+              cwd: resolvedProjectPath,
+              projectPath: resolvedProjectPath,
+              sessionId: effectiveSessionId,
+              resume: Boolean(effectiveSessionId),
+              model: cursorModel,
+              skipPermissions: toolsSettings?.skipPermissions || false,
+              toolsSettings,
+              ...(thinkingParam ? { thinkingParam } : {}),
+            },
+          });
+        } else if (provider === 'codex') {
+          sendSucceeded = sendMessage({
+            type: 'codex-command',
+            command: messageContent,
+            sessionId: effectiveSessionId,
+            options: {
+              cwd: resolvedProjectPath,
+              projectPath: resolvedProjectPath,
+              sessionId: effectiveSessionId,
+              resume: Boolean(effectiveSessionId),
+              model: codexModel,
+              permissionMode: permissionMode === 'plan' ? 'default' : permissionMode,
+              ...(thinkingParam ? { thinkingParam } : {}),
+            },
+          });
+        } else if (provider === 'gemini') {
+          sendSucceeded = sendMessage({
+            type: 'gemini-command',
+            command: messageContent,
+            sessionId: effectiveSessionId,
+            options: {
+              cwd: resolvedProjectPath,
+              projectPath: resolvedProjectPath,
+              sessionId: effectiveSessionId,
+              resume: Boolean(effectiveSessionId),
+              model: geminiModel,
+              permissionMode,
+              toolsSettings,
+              ...(thinkingParam ? { thinkingParam } : {}),
+            },
+          });
+        } else if (provider === 'kimi') {
+          sendSucceeded = sendMessage({
+            type: 'kimi-command',
+            command: messageContent,
+            sessionId: effectiveSessionId,
+            options: {
+              cwd: resolvedProjectPath,
+              projectPath: resolvedProjectPath,
+              sessionId: effectiveSessionId,
+              resume: Boolean(effectiveSessionId),
+              ...(thinkingParam ? { thinkingParam } : {}),
+            },
+          });
+        } else {
+          sendSucceeded = sendMessage({
+            type: 'claude-command',
+            command: messageContent,
+            options: {
+              projectPath: resolvedProjectPath,
+              cwd: resolvedProjectPath,
+              sessionId: effectiveSessionId,
+              resume: Boolean(effectiveSessionId),
+              toolsSettings,
+              permissionMode,
+              model: claudeModel,
+              images: uploadedImages,
+            },
+          });
+        }
+
+        if (!sendSucceeded) {
           setChatMessages((previous) => [
             ...previous,
+            { type: 'user', content: currentInput, images: uploadedImages as any, timestamp: new Date() },
             {
               type: 'error',
-              content: `Failed to upload images: ${message}`,
+              content: 'Failed to send message: connection lost. Please wait for reconnection and try again.',
               timestamp: new Date(),
             },
           ]);
           return;
         }
-      }
 
-      const userMessage: ChatMessage = {
-        type: 'user',
-        content: currentInput,
-        images: uploadedImages as any,
-        timestamp: new Date(),
-      };
-
-      setChatMessages((previous) => [...previous, userMessage]);
-      setIsLoading(true); // Processing banner starts
-      setCanAbortSession(true);
-      setClaudeStatus({
-        text: 'Processing',
-        tokens: 0,
-        can_interrupt: true,
-      });
-
-      setIsUserScrolledUp(false);
-      setTimeout(() => scrollToBottom(), 100);
-
-      const effectiveSessionId =
-        currentSessionId || selectedSession?.id || sessionStorage.getItem('cursorSessionId');
-      const sessionToActivate = effectiveSessionId || `new-session-${Date.now()}`;
-
-      if (!effectiveSessionId && !selectedSession?.id) {
-        if (typeof window !== 'undefined') {
-          // Reset stale pending IDs from previous interrupted runs before creating a new one.
-          sessionStorage.removeItem('pendingSessionId');
-        }
-        pendingViewSessionRef.current = { sessionId: null, startedAt: Date.now() };
-      }
-      onSessionActive?.(sessionToActivate);
-      if (effectiveSessionId && !isTemporarySessionId(effectiveSessionId)) {
-        onSessionProcessing?.(effectiveSessionId);
-      }
-
-      const getToolsSettings = () => {
-        try {
-          const settingsKey =
-            provider === 'cursor'
-              ? 'cursor-tools-settings'
-              : provider === 'codex'
-                ? 'codex-settings'
-                : provider === 'gemini'
-                  ? 'gemini-settings'
-                  : 'claude-settings';
-          const savedSettings = safeLocalStorage.getItem(settingsKey);
-          if (savedSettings) {
-            return JSON.parse(savedSettings);
-          }
-        } catch (error) {
-          console.error('Error loading tools settings:', error);
-        }
-
-        return {
-          allowedTools: [],
-          disallowedTools: [],
-          skipPermissions: false,
+        // Message sent successfully — now show loading state
+        const userMessage: ChatMessage = {
+          type: 'user',
+          content: currentInput,
+          images: uploadedImages as any,
+          timestamp: new Date(),
         };
-      };
 
-      const toolsSettings = getToolsSettings();
-      const resolvedProjectPath = selectedProject.fullPath || selectedProject.path || '';
+        setChatMessages((previous) => [...previous, userMessage]);
+        setIsLoading(true);
+        setCanAbortSession(true);
+        setClaudeStatus({
+          text: 'Processing',
+          tokens: 0,
+          can_interrupt: true,
+        });
 
-      if (provider === 'cursor') {
-        sendMessage({
-          type: 'cursor-command',
-          command: messageContent,
-          sessionId: effectiveSessionId,
-          options: {
-            cwd: resolvedProjectPath,
-            projectPath: resolvedProjectPath,
-            sessionId: effectiveSessionId,
-            resume: Boolean(effectiveSessionId),
-            model: cursorModel,
-            skipPermissions: toolsSettings?.skipPermissions || false,
-            toolsSettings,
-          },
-        });
-      } else if (provider === 'codex') {
-        sendMessage({
-          type: 'codex-command',
-          command: messageContent,
-          sessionId: effectiveSessionId,
-          options: {
-            cwd: resolvedProjectPath,
-            projectPath: resolvedProjectPath,
-            sessionId: effectiveSessionId,
-            resume: Boolean(effectiveSessionId),
-            model: codexModel,
-            permissionMode: permissionMode === 'plan' ? 'default' : permissionMode,
-          },
-        });
-      } else if (provider === 'gemini') {
-        sendMessage({
-          type: 'gemini-command',
-          command: messageContent,
-          sessionId: effectiveSessionId,
-          options: {
-            cwd: resolvedProjectPath,
-            projectPath: resolvedProjectPath,
-            sessionId: effectiveSessionId,
-            resume: Boolean(effectiveSessionId),
-            model: geminiModel,
-            permissionMode,
-            toolsSettings,
-          },
-        });
-      } else {
-        sendMessage({
-          type: 'claude-command',
-          command: messageContent,
-          options: {
-            projectPath: resolvedProjectPath,
-            cwd: resolvedProjectPath,
-            sessionId: effectiveSessionId,
-            resume: Boolean(effectiveSessionId),
-            toolsSettings,
-            permissionMode,
-            model: claudeModel,
-            images: uploadedImages,
-          },
-        });
+        setIsUserScrolledUp(false);
+        setTimeout(() => scrollToBottom(), 100);
+
+        const sessionToActivate = effectiveSessionId || `new-session-${Date.now()}`;
+
+        if (!effectiveSessionId && !selectedSession?.id) {
+          if (typeof window !== 'undefined') {
+            sessionStorage.removeItem('pendingSessionId');
+          }
+          pendingViewSessionRef.current = { sessionId: null, startedAt: Date.now() };
+        }
+        onSessionActive?.(sessionToActivate);
+        if (effectiveSessionId && !isTemporarySessionId(effectiveSessionId)) {
+          onSessionProcessing?.(effectiveSessionId);
+        }
+
+        setInput('');
+        inputValueRef.current = '';
+        resetCommandMenuState();
+        setAttachedImages([]);
+        setUploadingImages(new Map());
+        setImageErrors(new Map());
+        setIsTextareaExpanded(false);
+        setThinkingMode('none');
+
+        if (textareaRef.current) {
+          textareaRef.current.style.height = 'auto';
+        }
+
+        safeLocalStorage.removeItem(`draft_input_${selectedProject.name}`);
+      } finally {
+        submittingRef.current = false;
       }
-
-      setInput('');
-      inputValueRef.current = '';
-      resetCommandMenuState();
-      setAttachedImages([]);
-      setUploadingImages(new Map());
-      setImageErrors(new Map());
-      setIsTextareaExpanded(false);
-      setThinkingMode('none');
-
-      if (textareaRef.current) {
-        textareaRef.current.style.height = 'auto';
-      }
-
-      safeLocalStorage.removeItem(`draft_input_${selectedProject.name}`);
     },
     [
       attachedImages,
@@ -885,11 +924,14 @@ export function useChatComposerState({
       return;
     }
 
-    sendMessage({
+    const sent = sendMessage({
       type: 'abort-session',
       sessionId: targetSessionId,
       provider,
     });
+    if (!sent) {
+      console.warn('Failed to send abort request: WebSocket not connected');
+    }
   }, [canAbortSession, currentSessionId, pendingViewSessionRef, provider, selectedSession?.id, sendMessage]);
 
   const handleTranscript = useCallback((text: string) => {

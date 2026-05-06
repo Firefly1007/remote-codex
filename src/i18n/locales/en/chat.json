@@ -139,35 +139,52 @@
   "thinkingMode": {
     "selector": {
       "title": "Thinking Mode",
-      "description": "Extended thinking gives Claude more time to evaluate alternatives",
       "active": "Active",
       "tip": "Higher thinking modes take more time but provide more thorough analysis"
     },
-    "modes": {
-      "none": {
-        "name": "Standard",
-        "description": "Regular Claude response",
-        "prefix": ""
+    "providers": {
+      "claude": {
+        "description": "Extended thinking gives Claude more time to evaluate alternatives",
+        "modes": {
+          "none": { "name": "Standard", "description": "Regular Claude response" },
+          "think": { "name": "Think", "description": "Basic extended thinking" },
+          "thinkHard": { "name": "Think Hard", "description": "More thorough evaluation" },
+          "thinkHarder": { "name": "Think Harder", "description": "Deep analysis with alternatives" },
+          "ultrathink": { "name": "Ultrathink", "description": "Maximum thinking budget" }
+        }
       },
-      "think": {
-        "name": "Think",
-        "description": "Basic extended thinking",
-        "prefix": "think"
+      "codex": {
+        "description": "Adjust Codex reasoning depth",
+        "modes": {
+          "none": { "name": "Standard", "description": "Regular response" },
+          "low": { "name": "Light Reasoning", "description": "Quick reasoning for simple problems" },
+          "medium": { "name": "Medium Reasoning", "description": "Balanced reasoning depth and speed" },
+          "high": { "name": "Deep Reasoning", "description": "Maximum reasoning depth for complex problems" }
+        }
       },
-      "thinkHard": {
-        "name": "Think Hard",
-        "description": "More thorough evaluation",
-        "prefix": "think hard"
+      "cursor": {
+        "description": "Add thinking hints for Cursor",
+        "modes": {
+          "none": { "name": "Standard", "description": "Regular response" },
+          "think": { "name": "Think", "description": "Hint the model to think" },
+          "deep": { "name": "Deep Think", "description": "Hint the model for deep analysis" }
+        }
       },
-      "thinkHarder": {
-        "name": "Think Harder",
-        "description": "Deep analysis with alternatives",
-        "prefix": "think harder"
+      "gemini": {
+        "description": "Adjust Gemini thinking budget",
+        "modes": {
+          "none": { "name": "Standard", "description": "Regular response" },
+          "light": { "name": "Light Thinking", "description": "Low thinking budget" },
+          "moderate": { "name": "Moderate Thinking", "description": "Balanced thinking depth" },
+          "deep": { "name": "Deep Thinking", "description": "Maximum thinking budget" }
+        }
       },
-      "ultrathink": {
-        "name": "Ultrathink",
-        "description": "Maximum thinking budget",
-        "prefix": "ultrathink"
+      "kimi": {
+        "description": "Enable Kimi thinking mode",
+        "modes": {
+          "none": { "name": "Standard", "description": "Regular response" },
+          "on": { "name": "Enable Thinking", "description": "Enable deep thinking mode" }
+        }
       }
     },
     "buttonTitle": "Thinking mode: {{mode}}"

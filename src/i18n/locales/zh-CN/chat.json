@@ -121,35 +121,52 @@
   "thinkingMode": {
     "selector": {
       "title": "思考模式",
-      "description": "扩展思考给 Claude 更多时间来评估替代方案",
       "active": "激活",
       "tip": "更高的思考模式需要更多时间，但提供更彻底的分析"
     },
-    "modes": {
-      "none": {
-        "name": "标准",
-        "description": "常规 Claude 响应",
-        "prefix": ""
+    "providers": {
+      "claude": {
+        "description": "扩展思考让 Claude 有更多时间评估替代方案",
+        "modes": {
+          "none": { "name": "标准", "description": "常规 Claude 响应" },
+          "think": { "name": "思考", "description": "基本扩展思考" },
+          "thinkHard": { "name": "深入思考", "description": "更彻底的评估" },
+          "thinkHarder": { "name": "更深入思考", "description": "考虑替代方案的深度分析" },
+          "ultrathink": { "name": "超级思考", "description": "最大思考预算" }
+        }
       },
-      "think": {
-        "name": "思考",
-        "description": "基本扩展思考",
-        "prefix": "思考"
+      "codex": {
+        "description": "调整 Codex 的推理深度",
+        "modes": {
+          "none": { "name": "标准", "description": "常规响应" },
+          "low": { "name": "轻度推理", "description": "快速推理，适合简单问题" },
+          "medium": { "name": "中度推理", "description": "平衡推理深度与速度" },
+          "high": { "name": "深度推理", "description": "最大推理深度，适合复杂问题" }
+        }
       },
-      "thinkHard": {
-        "name": "深入思考",
-        "description": "更彻底的评估",
-        "prefix": "深入思考"
+      "cursor": {
+        "description": "为 Cursor 添加思考提示",
+        "modes": {
+          "none": { "name": "标准", "description": "常规响应" },
+          "think": { "name": "思考", "description": "提示模型进行思考" },
+          "deep": { "name": "深度思考", "description": "提示模型进行深度分析" }
+        }
       },
-      "thinkHarder": {
-        "name": "更深入思考",
-        "description": "考虑替代方案的深度分析",
-        "prefix": "更深入思考"
+      "gemini": {
+        "description": "调整 Gemini 的思考预算",
+        "modes": {
+          "none": { "name": "标准", "description": "常规响应" },
+          "light": { "name": "轻度思考", "description": "低思考预算" },
+          "moderate": { "name": "中度思考", "description": "平衡思考深度" },
+          "deep": { "name": "深度思考", "description": "最大思考预算" }
+        }
       },
-      "ultrathink": {
-        "name": "超级思考",
-        "description": "最大思考预算",
-        "prefix": "超级思考"
+      "kimi": {
+        "description": "启用 Kimi 的思考模式",
+        "modes": {
+          "none": { "name": "标准", "description": "常规响应" },
+          "on": { "name": "开启思考", "description": "启用深度思考模式" }
+        }
       }
     },
     "buttonTitle": "思考模式：{{mode}}"

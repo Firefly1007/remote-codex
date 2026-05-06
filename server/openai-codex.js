@@ -236,7 +236,8 @@ export async function queryCodex(command, options = {}, ws) {
     cwd,
     projectPath,
     model,
-    permissionMode = 'default'
+    permissionMode = 'default',
+    thinkingParam
   } = options;
 
   const requestedWorkingDirectory = cwd || projectPath || process.cwd();
@@ -261,7 +262,8 @@ export async function queryCodex(command, options = {}, ws) {
       skipGitRepoCheck: true,
       sandboxMode,
       approvalPolicy,
-      model
+      model,
+      ...(thinkingParam || {})
     };
 
     // Start or resume thread

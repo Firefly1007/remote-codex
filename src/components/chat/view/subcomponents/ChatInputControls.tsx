@@ -1,16 +1,12 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { IS_CODEX_ONLY_HARDENED } from '../../../../constants/config';
-import type { PermissionMode, Provider } from '../../types/types';
-import ThinkingModeSelector from './ThinkingModeSelector';
+import type { PermissionMode } from '../../types/types';
 import TokenUsagePie from './TokenUsagePie';
 
 interface ChatInputControlsProps {
   permissionMode: PermissionMode | string;
   onModeSwitch: () => void;
-  provider: Provider | string;
-  thinkingMode: string;
-  setThinkingMode: React.Dispatch<React.SetStateAction<string>>;
   tokenBudget: { used?: number; total?: number } | null;
   slashCommandsCount: number;
   onToggleCommandMenu: () => void;
@@ -24,9 +20,6 @@ interface ChatInputControlsProps {
 export default function ChatInputControls({
   permissionMode,
   onModeSwitch,
-  provider,
-  thinkingMode,
-  setThinkingMode,
   tokenBudget,
   slashCommandsCount,
   onToggleCommandMenu,
@@ -74,10 +67,6 @@ export default function ChatInputControls({
           </span>
         </div>
       </button>
-
-      {provider === 'claude' && (
-        <ThinkingModeSelector selectedMode={thinkingMode} onModeChange={setThinkingMode} onClose={() => {}} className="" />
-      )}
 
       <TokenUsagePie used={tokenBudget?.used || 0} total={tokenBudget?.total || parseInt(import.meta.env.VITE_CONTEXT_WINDOW) || 160000} />
 

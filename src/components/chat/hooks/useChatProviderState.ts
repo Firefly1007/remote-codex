@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { authenticatedFetch } from '../../../utils/api';
-import { CLAUDE_MODELS, CODEX_MODELS, CURSOR_MODELS, GEMINI_MODELS } from '../../../../shared/modelConstants';
+import { CLAUDE_MODELS, CODEX_MODELS, CURSOR_MODELS, GEMINI_MODELS, KIMI_MODELS } from '../../../../shared/modelConstants';
 import { IS_CODEX_ONLY_HARDENED } from '../../../constants/config';
 import type { PendingPermissionRequest, PermissionMode } from '../types/types';
 import type { ProjectSession, SessionProvider } from '../../../types/app';
@@ -30,6 +30,9 @@ export function useChatProviderState({ selectedSession }: UseChatProviderStateAr
   });
   const [geminiModel, setGeminiModel] = useState<string>(() => {
     return localStorage.getItem('gemini-model') || GEMINI_MODELS.DEFAULT;
+  });
+  const [kimiModel, setKimiModel] = useState<string>(() => {
+    return localStorage.getItem('kimi-model') || KIMI_MODELS.DEFAULT;
   });
 
   const lastProviderRef = useRef(provider);
@@ -122,6 +125,8 @@ export function useChatProviderState({ selectedSession }: UseChatProviderStateAr
     setCodexModel,
     geminiModel,
     setGeminiModel,
+    kimiModel,
+    setKimiModel,
     permissionMode,
     setPermissionMode,
     pendingPermissionRequests,

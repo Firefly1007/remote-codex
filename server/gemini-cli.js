@@ -13,7 +13,7 @@ import GeminiResponseHandler from './gemini-response-handler.js';
 let activeGeminiProcesses = new Map(); // Track active processes by session ID
 
 async function spawnGemini(command, options = {}, ws) {
-    const { sessionId, projectPath, cwd, resume, toolsSettings, permissionMode, images } = options;
+    const { sessionId, projectPath, cwd, resume, toolsSettings, permissionMode, images, thinkingParam } = options;
     let capturedSessionId = sessionId; // Track session ID throughout the process
     let sessionCreatedSent = false; // Track if we've already sent session-created event
     let assistantBlocks = []; // Accumulate the full response blocks including tools
@@ -31,6 +31,11 @@ async function spawnGemini(command, options = {}, ws) {
     // Add prompt flag with command if we have a command
     if (command && command.trim()) {
         args.push('--prompt', command);
+    }
+
+    // Add thinking budget if specified
+    if (thinkingParam?.thinkingBudget) {
+        args.push('--thinking-budget', String(thinkingParam.thinkingBudget));
     }
 
     // If we have a sessionId, we want to resume

@@ -19,6 +19,7 @@ import ClaudeStatus from './ClaudeStatus';
 import ImageAttachment from './ImageAttachment';
 import PermissionRequestsBanner from './PermissionRequestsBanner';
 import ChatInputControls from './ChatInputControls';
+import ThinkingModeSelector from './ThinkingModeSelector';
 
 interface MentionableFile {
   name: string;
@@ -192,9 +193,6 @@ export default function ChatComposer({
         {!hasQuestionPanel && <ChatInputControls
           permissionMode={permissionMode}
           onModeSwitch={onModeSwitch}
-          provider={provider}
-          thinkingMode={thinkingMode}
-          setThinkingMode={setThinkingMode}
           tokenBudget={tokenBudget}
           slashCommandsCount={slashCommandsCount}
           onToggleCommandMenu={onToggleCommandMenu}
@@ -284,7 +282,7 @@ export default function ChatComposer({
         >
           <input {...getInputProps()} />
           <div ref={inputHighlightRef} aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
-            <div className="chat-input-placeholder block w-full whitespace-pre-wrap break-words py-1.5 pl-12 pr-20 text-base leading-6 text-transparent sm:py-4 sm:pr-40">
+            <div className="chat-input-placeholder block w-full whitespace-pre-wrap break-words py-1.5 pl-16 pr-20 text-base leading-6 text-transparent sm:py-4 sm:pr-40">
               {renderInputWithMentions(input)}
             </div>
           </div>
@@ -302,24 +300,49 @@ export default function ChatComposer({
               onBlur={() => onInputFocusChange?.(false)}
               onInput={onTextareaInput}
               placeholder={placeholder}
-              className="chat-input-placeholder block max-h-[40vh] min-h-[50px] w-full resize-none overflow-y-auto rounded-2xl bg-transparent py-1.5 pl-12 pr-20 text-base leading-6 text-foreground placeholder-muted-foreground/50 transition-all duration-200 focus:outline-none sm:max-h-[300px] sm:min-h-[80px] sm:py-4 sm:pr-40"
+              className="chat-input-placeholder block max-h-[40vh] min-h-[50px] w-full resize-none overflow-y-auto rounded-2xl bg-transparent py-1.5 pl-16 pr-20 text-base leading-6 text-foreground placeholder-muted-foreground/50 transition-all duration-200 focus:outline-none sm:max-h-[300px] sm:min-h-[80px] sm:py-4 sm:pr-40"
               style={{ height: '50px' }}
             />
 
-            {!IS_CODEX_ONLY_HARDENED && (
+            {/* Left side: Thinking mode + Image picker */}
+            <div className="absolute left-1.5 top-1/2 flex -translate-y-1/2 transform items-center gap-0.5">
+              <ThinkingModeSelector
+                provider={typeof provider === 'string' ? provider : 'claude'}
+                selectedMode={thinkingMode}
+                onModeChange={setThinkingMode}
+                onClose={() => {}}
+                className=""
+                compact
+              />
+              {!IS_CODEX_ONLY_HARDENED && (
+                <button
+                  type="button"
+                  onClick={openImagePicker}
+                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
+                  title={t('input.attachImages')}
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
+
+            {/* Clear button at top-right when expanded */}
+            {hasInput && isTextareaExpanded && (
               <button
                 type="button"
-                onClick={openImagePicker}
-                className="absolute left-2 top-1/2 -translate-y-1/2 transform rounded-xl p-2 transition-colors hover:bg-accent/60"
-                title={t('input.attachImages')}
+                onClick={onClearInput}
+                className="absolute right-2 top-2 rounded-md p-1 text-muted-foreground/60 transition-colors hover:bg-accent/60 hover:text-foreground"
+                title={t('input.clearInput', { defaultValue: 'Clear input' })}
               >
-                <svg className="h-5 w-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             )}
@@ -347,7 +370,7 @@ export default function ChatComposer({
             </button>
 
             <div
-              className={`pointer-events-none absolute bottom-1 left-12 right-14 hidden text-xs text-muted-foreground/50 transition-opacity duration-200 sm:right-40 sm:block ${
+              className={`pointer-events-none absolute bottom-1 left-16 right-14 hidden text-xs text-muted-foreground/50 transition-opacity duration-200 sm:right-40 sm:block ${
                 input.trim() ? 'opacity-0' : 'opacity-100'
               }`}
             >
