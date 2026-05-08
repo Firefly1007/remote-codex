@@ -8,6 +8,7 @@ import type { ConversationSearchResults, SearchProgress } from '../../hooks/useS
 import SidebarFooter from './SidebarFooter';
 import SidebarHeader from './SidebarHeader';
 import SidebarProjectList, { type SidebarProjectListProps } from './SidebarProjectList';
+import SidebarProviderSelector from './SidebarProviderSelector';
 
 type SearchMode = 'projects' | 'conversations';
 
@@ -112,6 +113,8 @@ export default function SidebarContent({
         onCollapseSidebar={onCollapseSidebar}
         t={t}
       />
+
+      <SidebarProviderSelector />
 
       <ScrollArea className="flex-1 overflow-y-auto overscroll-contain md:px-1.5 md:py-2">
         {showConversationSearch ? (

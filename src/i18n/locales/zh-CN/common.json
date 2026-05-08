@@ -490,6 +490,7 @@
     "cursorLogin": "Cursor CLI 登录",
     "codexLogin": "Codex CLI 登录",
     "geminiConfig": "Gemini CLI 配置",
+    "kimiLogin": "Kimi CLI 登录",
     "closeModal": "关闭登录模态框",
     "setupGemini": "设置 Gemini API 访问",
     "geminiDesc": "Gemini CLI 需要 API 密钥才能运行。请先在终端中配置。",

@@ -10,10 +10,12 @@ export default function AgentsSettingsTab({
   cursorAuthStatus,
   codexAuthStatus,
   geminiAuthStatus,
+  kimiAuthStatus,
   onClaudeLogin,
   onCursorLogin,
   onCodexLogin,
   onGeminiLogin,
+  onKimiLogin,
   claudePermissions,
   onClaudePermissionsChange,
   cursorPermissions,
@@ -56,15 +58,21 @@ export default function AgentsSettingsTab({
       authStatus: geminiAuthStatus,
       onLogin: onGeminiLogin,
     },
+    kimi: {
+      authStatus: kimiAuthStatus,
+      onLogin: onKimiLogin,
+    },
   }), [
     claudeAuthStatus,
     codexAuthStatus,
     cursorAuthStatus,
     geminiAuthStatus,
+    kimiAuthStatus,
     onClaudeLogin,
     onCodexLogin,
     onCursorLogin,
     onGeminiLogin,
+    onKimiLogin,
   ]);
 
   return (

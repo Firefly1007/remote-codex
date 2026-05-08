@@ -1,13 +1,15 @@
-import React from "react";
-import { Check, ChevronDown } from "lucide-react";
+import React, { useState } from "react";
+import { Check, ChevronDown, Loader2, Wifi, WifiOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import SessionProviderLogo from "../../../llm-logo-provider/SessionProviderLogo";
 import { IS_CODEX_ONLY_HARDENED } from "../../../../constants/config";
+import { authenticatedFetch } from "../../../../utils/api";
 import {
   CLAUDE_MODELS,
   CURSOR_MODELS,
   CODEX_MODELS,
   GEMINI_MODELS,
+  KIMI_MODELS,
 } from "../../../../../shared/modelConstants";
 import type { ProjectSession, SessionProvider } from "../../../../types/app";
 import { NextTaskBanner } from "../../../task-master";
@@ -26,6 +28,8 @@ type ProviderSelectionEmptyStateProps = {
   setCodexModel: (model: string) => void;
   geminiModel: string;
   setGeminiModel: (model: string) => void;
+  kimiModel: string;
+  setKimiModel: (model: string) => void;
   tasksEnabled: boolean;
   isTaskMasterInstalled: boolean | null;
   onShowAllTasks?: (() => void) | null;
@@ -74,12 +78,21 @@ const PROVIDERS: ProviderDef[] = [
     ring: "ring-blue-500/15",
     check: "bg-blue-500 text-white",
   },
+  {
+    id: "kimi",
+    name: "Kimi",
+    infoKey: "providerSelection.providerInfo.moonshot",
+    accent: "border-orange-500 dark:border-orange-400",
+    ring: "ring-orange-500/15",
+    check: "bg-orange-500 text-white",
+  },
 ];
 
 function getModelConfig(p: SessionProvider) {
   if (p === "claude") return CLAUDE_MODELS;
   if (p === "codex") return CODEX_MODELS;
   if (p === "gemini") return GEMINI_MODELS;
+  if (p === "kimi") return KIMI_MODELS;
   return CURSOR_MODELS;
 }
 
@@ -89,11 +102,89 @@ function getModelValue(
   cu: string,
   co: string,
   g: string,
+  k: string,
 ) {
   if (p === "claude") return c;
   if (p === "codex") return co;
   if (p === "gemini") return g;
+  if (p === "kimi") return k;
   return cu;
+}
+
+type CliStatus = "idle" | "loading" | "success" | "error";
+
+function ConnectionTestButton({
+  provider: providerId,
+  t,
+}: {
+  provider: SessionProvider;
+  t: (key: string, opts?: Record<string, unknown>) => string;
+}) {
+  const [status, setStatus] = useState<CliStatus>("idle");
+  const [version, setVersion] = useState<string | null>(null);
+
+  const testConnection = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setStatus("loading");
+    try {
+      const res = await authenticatedFetch(`/api/cli-status?provider=${providerId}`);
+      const data = await res.json();
+      const result = data[providerId];
+      if (result?.available) {
+        setStatus("success");
+        setVersion(result.version || null);
+      } else {
+        setStatus("error");
+        setVersion(null);
+      }
+    } catch {
+      setStatus("error");
+      setVersion(null);
+    }
+  };
+
+  if (status === "idle") {
+    return (
+      <button
+        type="button"
+        onClick={testConnection}
+        className="mt-0.5 flex items-center gap-1 text-[9px] text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+      >
+        <Wifi className="h-2.5 w-2.5" />
+        {t("providerSelection.connectionTest.test")}
+      </button>
+    );
+  }
+
+  if (status === "loading") {
+    return (
+      <span className="mt-0.5 flex items-center gap-1 text-[9px] text-muted-foreground/60">
+        <Loader2 className="h-2.5 w-2.5 animate-spin" />
+        {t("providerSelection.connectionTest.testing")}
+      </span>
+    );
+  }
+
+  if (status === "success") {
+    return (
+      <span className="mt-0.5 flex items-center gap-1 text-[9px] text-green-600 dark:text-green-400">
+        <Wifi className="h-2.5 w-2.5" />
+        {version || t("providerSelection.connectionTest.success")}
+      </span>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={testConnection}
+      className="mt-0.5 flex items-center gap-1 text-[9px] text-red-500/80 hover:text-red-500 transition-colors"
+      title={t("providerSelection.connectionTest.failed")}
+    >
+      <WifiOff className="h-2.5 w-2.5" />
+      {t("providerSelection.connectionTest.failed")}
+    </button>
+  );
 }
 
 export default function ProviderSelectionEmptyState({
@@ -110,6 +201,8 @@ export default function ProviderSelectionEmptyState({
   setCodexModel,
   geminiModel,
   setGeminiModel,
+  kimiModel,
+  setKimiModel,
   tasksEnabled,
   isTaskMasterInstalled,
   onShowAllTasks,
@@ -136,6 +229,9 @@ export default function ProviderSelectionEmptyState({
     } else if (provider === "gemini") {
       setGeminiModel(value);
       localStorage.setItem("gemini-model", value);
+    } else if (provider === "kimi") {
+      setKimiModel(value);
+      localStorage.setItem("kimi-model", value);
     } else {
       setCursorModel(value);
       localStorage.setItem("cursor-model", value);
@@ -149,6 +245,7 @@ export default function ProviderSelectionEmptyState({
     cursorModel,
     codexModel,
     geminiModel,
+    kimiModel,
   );
 
   /* ── New session — provider picker ── */
@@ -205,7 +302,7 @@ export default function ProviderSelectionEmptyState({
 
     return (
       <div className="flex h-full items-center justify-center px-4">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-2xl">
           {/* Heading */}
           <div className="mb-8 text-center">
             <h2 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
@@ -217,7 +314,7 @@ export default function ProviderSelectionEmptyState({
           </div>
 
           {/* Provider cards — horizontal row, equal width */}
-          <div className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2.5">
+          <div className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5 lg:grid-cols-5">
             {PROVIDERS.map((p) => {
               const active = provider === p.id;
               return (
@@ -247,6 +344,7 @@ export default function ProviderSelectionEmptyState({
                       {t(p.infoKey)}
                     </p>
                   </div>
+                  <ConnectionTestButton provider={p.id} t={t} />
                   {/* Check badge */}
                   {active && (
                     <div
@@ -303,7 +401,7 @@ export default function ProviderSelectionEmptyState({
                     model: geminiModel,
                   }),
                   kimi: t("providerSelection.readyPrompt.kimi", {
-                    defaultValue: "Ready to use Kimi. Start typing your message below.",
+                    model: kimiModel,
                   }),
                 }[provider]
               }

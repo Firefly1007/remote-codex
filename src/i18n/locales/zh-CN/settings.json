@@ -312,6 +312,9 @@
       },
       "gemini": {
         "description": "Google Gemini AI 助手"
+      },
+      "kimi": {
+        "description": "Moonshot Kimi AI 助手"
       }
     },
     "connectionStatus": "连接状态",

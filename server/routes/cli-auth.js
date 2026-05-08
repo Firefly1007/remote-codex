@@ -3,6 +3,7 @@ import { spawn } from 'child_process';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
+import toml from '@iarna/toml';
 
 const router = express.Router();
 
@@ -43,6 +44,7 @@ router.get('/cursor/status', async (req, res) => {
     res.json({
       authenticated: result.authenticated,
       email: result.email,
+      method: result.method,
       error: result.error
     });
 
@@ -51,6 +53,7 @@ router.get('/cursor/status', async (req, res) => {
     res.status(500).json({
       authenticated: false,
       email: null,
+      method: null,
       error: error.message
     });
   }
@@ -63,6 +66,7 @@ router.get('/codex/status', async (req, res) => {
     res.json({
       authenticated: result.authenticated,
       email: result.email,
+      method: result.method,
       error: result.error
     });
 
@@ -71,6 +75,7 @@ router.get('/codex/status', async (req, res) => {
     res.status(500).json({
       authenticated: false,
       email: null,
+      method: null,
       error: error.message
     });
   }
@@ -83,6 +88,7 @@ router.get('/gemini/status', async (req, res) => {
     res.json({
       authenticated: result.authenticated,
       email: result.email,
+      method: result.method,
       error: result.error
     });
 
@@ -91,6 +97,29 @@ router.get('/gemini/status', async (req, res) => {
     res.status(500).json({
       authenticated: false,
       email: null,
+      method: null,
+      error: error.message
+    });
+  }
+});
+
+router.get('/kimi/status', async (req, res) => {
+  try {
+    const result = await checkKimiCredentials();
+
+    res.json({
+      authenticated: result.authenticated,
+      email: result.email,
+      method: result.method,
+      error: result.error
+    });
+
+  } catch (error) {
+    console.error('Error checking Kimi auth status:', error);
+    res.status(500).json({
+      authenticated: false,
+      email: null,
+      method: null,
       error: error.message
     });
   }
@@ -163,7 +192,43 @@ async function checkClaudeCredentials() {
   }
 }
 
-function checkCursorStatus() {
+async function checkCursorStatus() {
+  // Priority 1: Check ~/.cursor/config.json for API key configuration
+  // Cursor CLI can be configured via config file without login
+  try {
+    const configPath = path.join(os.homedir(), '.cursor', 'config.json');
+    const content = await fs.readFile(configPath, 'utf8');
+    const config = JSON.parse(content);
+
+    if (config.apiKey || config.api_key) {
+      return {
+        authenticated: true,
+        email: 'Config Auth',
+        method: 'config_file'
+      };
+    }
+  } catch (e) {
+    // Config file doesn't exist or is invalid, continue to other checks
+  }
+
+  // Priority 2: Check ~/.cursor/cli-config.json for API key
+  try {
+    const cliConfigPath = path.join(os.homedir(), '.cursor', 'cli-config.json');
+    const content = await fs.readFile(cliConfigPath, 'utf8');
+    const config = JSON.parse(content);
+
+    if (config.apiKey || config.api_key) {
+      return {
+        authenticated: true,
+        email: 'Config Auth',
+        method: 'config_file'
+      };
+    }
+  } catch (e) {
+    // Config file doesn't exist or is invalid, continue
+  }
+
+  // Priority 3: Check cursor-agent status (login-based auth)
   return new Promise((resolve) => {
     let processCompleted = false;
 
@@ -218,13 +283,13 @@ function checkCursorStatus() {
           resolve({
             authenticated: true,
             email: emailMatch[1],
-            output: stdout
+            method: 'login'
           });
         } else if (stdout.includes('Logged in')) {
           resolve({
             authenticated: true,
             email: 'Logged in',
-            output: stdout
+            method: 'login'
           });
         } else {
           resolve({
@@ -257,6 +322,17 @@ function checkCursorStatus() {
 }
 
 async function checkCodexCredentials() {
+  // Priority 1: Check OPENAI_API_KEY environment variable
+  // Codex CLI uses OpenAI API and can be configured via env var
+  if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.trim()) {
+    return {
+      authenticated: true,
+      email: 'API Key Auth',
+      method: 'api_key'
+    };
+  }
+
+  // Priority 2: Check ~/.codex/auth.json
   try {
     const authPath = path.join(os.homedir(), '.codex', 'auth.json');
     const content = await fs.readFile(authPath, 'utf8');
@@ -286,21 +362,24 @@ async function checkCodexCredentials() {
 
       return {
         authenticated: true,
-        email
+        email,
+        method: 'credentials_file'
       };
     }
 
-    // Also check for OPENAI_API_KEY as fallback auth method
+    // Also check for OPENAI_API_KEY in auth.json as fallback
     if (auth.OPENAI_API_KEY) {
       return {
         authenticated: true,
-        email: 'API Key Auth'
+        email: 'API Key Auth',
+        method: 'config_file'
       };
     }
 
     return {
       authenticated: false,
       email: null,
+      method: null,
       error: 'No valid tokens found'
     };
   } catch (error) {
@@ -308,12 +387,14 @@ async function checkCodexCredentials() {
       return {
         authenticated: false,
         email: null,
+        method: null,
         error: 'Codex not configured'
       };
     }
     return {
       authenticated: false,
       email: null,
+      method: null,
       error: error.message
     };
   }
@@ -323,7 +404,8 @@ async function checkGeminiCredentials() {
   if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim()) {
     return {
       authenticated: true,
-      email: 'API Key Auth'
+      email: 'API Key Auth',
+      method: 'api_key'
     };
   }
 
@@ -348,6 +430,7 @@ async function checkGeminiCredentials() {
           return {
             authenticated: false,
             email: null,
+            method: null,
             error: 'Access token invalid and no refresh token found'
           };
         } else {
@@ -375,20 +458,102 @@ async function checkGeminiCredentials() {
 
       return {
         authenticated: true,
-        email: email
+        email: email,
+        method: 'credentials_file'
       };
     }
 
     return {
       authenticated: false,
       email: null,
+      method: null,
       error: 'No valid tokens found in oauth_creds'
     };
   } catch (error) {
     return {
       authenticated: false,
       email: null,
+      method: null,
       error: 'Gemini CLI not configured'
+    };
+  }
+}
+
+/**
+ * Checks Kimi authentication by reading ~/.kimi/config.toml
+ * Kimi SDK stores auth in [providers."managed:kimi-code"] section
+ * with either api_key or oauth fields.
+ */
+async function checkKimiCredentials() {
+  try {
+    const kimiDir = process.env.KIMI_SHARE_DIR || path.join(os.homedir(), '.kimi');
+    const configPath = path.join(kimiDir, 'config.toml');
+    const content = await fs.readFile(configPath, 'utf8');
+    const config = toml.parse(content);
+
+    const providers = config.providers;
+    if (!providers) {
+      return {
+        authenticated: false,
+        email: null,
+        method: null,
+        error: 'No providers configured'
+      };
+    }
+
+    // Check for managed:kimi-code provider (the default Kimi provider)
+    const kimiProvider = providers['managed:kimi-code'];
+    if (kimiProvider) {
+      // Check for API key
+      if (kimiProvider.api_key && kimiProvider.api_key.trim()) {
+        return {
+          authenticated: true,
+          email: 'API Key Auth',
+          method: 'config_file'
+        };
+      }
+
+      // Check for OAuth configuration
+      if (kimiProvider.oauth) {
+        return {
+          authenticated: true,
+          email: 'OAuth Session',
+          method: 'credentials_file'
+        };
+      }
+    }
+
+    // Also check for any provider with a valid api_key
+    for (const [name, provider] of Object.entries(providers)) {
+      if (provider.api_key && provider.api_key.trim()) {
+        return {
+          authenticated: true,
+          email: `Config Auth (${name})`,
+          method: 'config_file'
+        };
+      }
+    }
+
+    return {
+      authenticated: false,
+      email: null,
+      method: null,
+      error: 'No valid credentials found in Kimi config'
+    };
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      return {
+        authenticated: false,
+        email: null,
+        method: null,
+        error: 'Kimi not configured'
+      };
+    }
+    return {
+      authenticated: false,
+      email: null,
+      method: null,
+      error: error.message
     };
   }
 }

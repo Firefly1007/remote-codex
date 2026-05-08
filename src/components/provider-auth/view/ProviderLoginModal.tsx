@@ -55,6 +55,10 @@ const getProviderCommand = ({
     return IS_PLATFORM ? 'codex login --device-auth' : 'codex login';
   }
 
+  if (provider === 'kimi') {
+    return 'kimi login';
+  }
+
   return 'gemini status';
 };
 
@@ -62,6 +66,7 @@ const getProviderTitle = (provider: CliProvider, t: (key: string) => string) => 
   if (provider === 'claude') return t('providerAuth.claudeLogin');
   if (provider === 'cursor') return t('providerAuth.cursorLogin');
   if (provider === 'codex') return t('providerAuth.codexLogin');
+  if (provider === 'kimi') return t('providerAuth.kimiLogin');
   return t('providerAuth.geminiConfig');
 };
 

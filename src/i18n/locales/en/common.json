@@ -490,6 +490,7 @@
     "cursorLogin": "Cursor CLI Login",
     "codexLogin": "Codex CLI Login",
     "geminiConfig": "Gemini CLI Configuration",
+    "kimiLogin": "Kimi CLI Login",
     "closeModal": "Close login modal",
     "setupGemini": "Setup Gemini API Access",
     "geminiDesc": "The Gemini CLI requires an API key to function. Configure it in your terminal first.",

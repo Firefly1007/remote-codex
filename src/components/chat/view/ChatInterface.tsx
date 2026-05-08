@@ -67,6 +67,8 @@ function ChatInterface({
     setCodexModel,
     geminiModel,
     setGeminiModel,
+    kimiModel,
+    setKimiModel,
     permissionMode,
     pendingPermissionRequests,
     setPendingPermissionRequests,
@@ -268,15 +270,7 @@ function ChatInterface({
   }, [resetStreamingState]);
 
   if (!selectedProject) {
-    const selectedProviderLabel = IS_CODEX_ONLY_HARDENED ? t('messageTypes.codex') : (
-      provider === 'cursor'
-        ? t('messageTypes.cursor')
-        : provider === 'codex'
-          ? t('messageTypes.codex')
-          : provider === 'gemini'
-            ? t('messageTypes.gemini')
-            : t('messageTypes.claude')
-    );
+    const selectedProviderLabel = IS_CODEX_ONLY_HARDENED ? t('messageTypes.codex') : t(`messageTypes.${provider}`);
 
     return (
       <div className="flex h-full items-center justify-center">
@@ -314,6 +308,8 @@ function ChatInterface({
           setCodexModel={setCodexModel}
           geminiModel={geminiModel}
           setGeminiModel={setGeminiModel}
+          kimiModel={kimiModel}
+          setKimiModel={setKimiModel}
           tasksEnabled={tasksEnabled}
           isTaskMasterInstalled={isTaskMasterInstalled}
           onShowAllTasks={onShowAllTasks}
@@ -397,14 +393,7 @@ function ChatInterface({
           onInputFocusChange={handleInputFocusChange}
           isInputFocused={isInputFocused}
           placeholder={t('input.placeholder', {
-            provider:
-              provider === 'cursor'
-                ? t('messageTypes.cursor')
-                : provider === 'codex'
-                  ? t('messageTypes.codex')
-                  : provider === 'gemini'
-                    ? t('messageTypes.gemini')
-                    : t('messageTypes.claude'),
+            provider: t(`messageTypes.${provider}`),
           })}
           isTextareaExpanded={isTextareaExpanded}
           sendByCtrlEnter={sendByCtrlEnter}

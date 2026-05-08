@@ -92,4 +92,5 @@ export const AUTH_STATUS_ENDPOINTS: Record<AgentProvider, string> = {
   cursor: '/api/cli/cursor/status',
   codex: '/api/cli/codex/status',
   gemini: '/api/cli/gemini/status',
+  kimi: '/api/cli/kimi/status',
 };

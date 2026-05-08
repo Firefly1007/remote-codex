@@ -23,10 +23,12 @@ export type AgentsSettingsTabProps = {
   cursorAuthStatus: AuthStatus;
   codexAuthStatus: AuthStatus;
   geminiAuthStatus: AuthStatus;
+  kimiAuthStatus: AuthStatus;
   onClaudeLogin: () => void;
   onCursorLogin: () => void;
   onCodexLogin: () => void;
   onGeminiLogin: () => void;
+  onKimiLogin: () => void;
   claudePermissions: ClaudePermissionsState;
   onClaudePermissionsChange: (value: ClaudePermissionsState) => void;
   cursorPermissions: CursorPermissionsState;

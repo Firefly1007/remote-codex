@@ -72,7 +72,7 @@ import { validateApiKey, authenticateToken, authenticateWebSocketRequest } from 
 import { IS_PLATFORM } from './constants/config.js';
 
 const CODEX_ONLY_HARDENED_MODE = process.env.CODEX_ONLY_HARDENED_MODE !== 'false';
-const VALID_PROVIDERS = CODEX_ONLY_HARDENED_MODE ? ['codex'] : ['claude', 'codex', 'cursor', 'gemini'];
+const VALID_PROVIDERS = CODEX_ONLY_HARDENED_MODE ? ['codex'] : ['claude', 'codex', 'cursor', 'gemini', 'kimi'];
 
 // File system watchers for provider project/session folders
 const PROVIDER_WATCH_PATHS = CODEX_ONLY_HARDENED_MODE
@@ -365,6 +365,72 @@ app.get('/health', (req, res) => {
         timestamp: new Date().toISOString(),
         installMode
     });
+});
+
+// CLI availability check endpoint
+const CLI_CHECK_COMMANDS = {
+    claude: { cmd: 'claude', args: ['--version'] },
+    cursor: { cmd: 'agent', args: ['--version'] },
+    codex: { cmd: 'codex', args: ['--version'] },
+    gemini: { cmd: 'gemini', args: ['--version'] },
+    kimi: { cmd: 'kimi', args: ['--version'] },
+};
+
+function checkCliAvailability(provider) {
+    const config = CLI_CHECK_COMMANDS[provider];
+    if (!config) return Promise.resolve({ available: false, error: 'unknown provider' });
+
+    return new Promise((resolve) => {
+        const child = spawn(config.cmd, config.args, {
+            stdio: ['ignore', 'pipe', 'pipe'],
+            timeout: 5000,
+            shell: process.platform === 'win32',
+        });
+
+        let stdout = '';
+        let resolved = false;
+
+        child.stdout?.on('data', (data) => { stdout += data.toString(); });
+        child.stderr?.on('data', (data) => { stdout += data.toString(); });
+
+        const finish = (available, version, error) => {
+            if (resolved) return;
+            resolved = true;
+            resolve({ available, version: version || null, error: error || null });
+        };
+
+        child.on('close', (code) => {
+            const version = stdout.trim().split('\n')[0]?.substring(0, 80) || '';
+            finish(code === 0, version || `${config.cmd} found`, null);
+        });
+
+        child.on('error', (err) => {
+            finish(false, null, err.code === 'ENOENT' ? 'not found' : err.message);
+        });
+
+        setTimeout(() => {
+            try { child.kill(); } catch {}
+            finish(false, null, 'timeout');
+        }, 5000);
+    });
+}
+
+app.get('/api/cli-status', authenticateToken, async (req, res) => {
+    const singleProvider = req.query.provider;
+    const providers = singleProvider
+        ? [singleProvider]
+        : Object.keys(CLI_CHECK_COMMANDS);
+
+    const results = {};
+    await Promise.all(
+        providers.map(async (p) => {
+            if (CLI_CHECK_COMMANDS[p]) {
+                results[p] = await checkCliAvailability(p);
+            }
+        })
+    );
+
+    res.json(results);
 });
 
 // Optional API key validation (if configured)

@@ -90,7 +90,7 @@ async function spawnCursor(command, options = {}, ws) {
       console.log('Working directory:', workingDir);
       console.log('Session info - Input sessionId:', sessionId, 'Resume:', resume);
 
-      const cursorProcess = spawnFunction('cursor-agent', args, {
+      const cursorProcess = spawnFunction('agent', args, {
         cwd: workingDir,
         stdio: ['pipe', 'pipe', 'pipe'],
         env: { ...process.env } // Inherit all environment variables
